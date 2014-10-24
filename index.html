@@ -1,0 +1,154 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="http://knockoutjs.com/downloads/knockout-3.0.0.js"></script>
+    <style type="text/css">
+      html, body, fieldset {
+          margin: 0;
+          padding: 0;
+          border: 0;
+      }
+
+      body, input, button, select {
+          font-family: 'Helvetica Neue', sans-serif;
+          font-weight: 200;
+          font-size: 14px;
+      }
+
+      #word-search, #word-list, #word-details {
+          outline: 0px solid red;
+      }
+
+      #word-list {
+          float: left;
+          width: 40%;
+      }
+
+      #word-list select {
+          width: 100%;
+      }
+
+      #word-details {
+          float: right;
+          width: 60%;
+      }
+
+      select {
+          line-height: 150%;
+      }
+
+      button {
+          -webkit-appearance: button;
+      }
+
+      form {
+          background-color: Window;
+      }
+
+      label {
+          display: inline-block;
+          text-align: right;
+          width: 5em;
+      }
+
+      label[dir=rtl]:before,
+      label[dir=ltr]:after  {
+          display: inline;
+          content: ':';
+      }
+
+    </style>
+    <script type="text/javascript">//<![CDATA[ 
+        window.onload=function(){
+        function Word() {
+            this.hebrew = ko.observable('');
+            this.russian = ko.observable('');
+            this.translit = ko.observable('');
+            this.isBlank = ko.observable(true);
+            
+            this.displayName = ko.computed(function () {
+                return this.hebrew() || '<empty>';
+            }, this);
+        }
+
+        function App() {
+            var blank = new Word();
+            this.words = ko.observableArray([blank]);
+            this.chosenWord = ko.observable(blank);
+            this.json = ko.computed(function () {
+                var collection = this.words().map(function (word) {
+                    return {
+                        hebrew: word.hebrew(),
+                        russian: word.russian(),
+                        translit: word.translit(),
+                    };
+                });
+
+                return JSON.stringify(collection, null, 4).replace("[", "").replace("]","");
+            }, this);
+
+            // binding
+            this.addWord = this.addWord.bind(this);
+            this.removeWord = this.removeWord.bind(this);
+        }
+
+        App.prototype.addWord = function () {
+            var blank = new Word();
+
+            this.words.push(blank);
+            this.chosenWord(blank);
+        };
+
+        App.prototype.removeWord = function () {
+            var words = this.words(),
+                word = this.chosenWord(),
+                length = words.length,
+                index = words.indexOf(word);
+            
+            if (word && length > 1) {
+                this.words.remove(word);
+                index = Math.max(0, Math.min(length - 2, index - 1));
+                this.chosenWord(words[index]);
+            }
+        };
+
+        ko.applyBindings(new App());
+        }//]]>  
+    </script>
+
+</head>
+<body>
+    <div id="word-search" style="display: none">
+        <label for="word-search-input" dir="ltr">Поиск</label>
+        <input id="word-search-input" type="search">
+    </div>
+
+    <div id="word-list">
+        <select name="sometext" size="10" data-bind="options: words, optionsText: 'displayName', value: chosenWord">
+            <option value="">&lt;empty&gt;</option>
+        </select>
+    </div>
+
+    <form id="word-details" data-bind="with: chosenWord">
+        <fieldset>
+            <div>
+                <label for="hebrew" dir="rtl">עברית</label>
+                <input id="hebrew" type="text" dir="rtl" data-bind="value: hebrew">
+            </div>
+            <div>
+                <label for="russian" dir="ltr">Русский</label>
+                <input id="russian" type="text" data-bind="value: russian">
+            </div>    
+            <div>
+                <label for="translit" dir="ltr">Транслит</label>
+                <input id="translit" type="text" data-bind="value: translit">
+            </div>
+        </fieldset>
+    </form>
+
+    <div style="clear: both;"></div>
+    <button data-bind="click: addWord">+</button>
+    <button data-bind="click: removeWord">-</button>
+    <br>
+    <textarea data-bind="text: json" cols="40" rows="70"></textarea>
+</body></html>
